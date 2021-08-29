@@ -1,11 +1,9 @@
-package pageModel;
+package models;
 
 import io.restassured.RestAssured;
-import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.junit.After;
 import org.junit.Before;
-
 
 public class StoreModel {
 
@@ -18,12 +16,6 @@ public class StoreModel {
 
     @After
     public void tearDown() {
-        RestAssured
-                .given()
-                .contentType(ContentType.JSON)
-                .delete("/books")
-                .then()
-                .extract()
-                .response();
+
     }
 }

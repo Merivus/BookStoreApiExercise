@@ -1,6 +1,7 @@
 package test;
 
-import pageModel.StoreModel;
+import models.BookModel;
+import models.StoreModel;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
@@ -8,17 +9,17 @@ import io.restassured.response.Response;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.awt.print.Book;
+import java.util.List;
+
 import static io.restassured.RestAssured.given;
 import static org.junit.Assert.assertEquals;
 
 public class StoreTest extends StoreModel {
 
-    String jsonBody = "{ \"id\": 1, \"author\": \"John Smith\", \"title\": \"Reliability of late night\n" +
-            "deployments\" }";
-    String incorrectJsonBody = "{ \"id\": 1, \"title\": \"Reliability of late night\n" +
-            "deployments\" }";
-    String emptyFieldJsonBody = "{ \"id\": 1, \"author\": \"\", \"title\": \"Reliability of late night\n" +
-            "deployments\" }";
+    String jsonBody = "{ \"id\": 1, \"author\": \"John Smith\", \"title\": \"Reliability of late night deployments\" }";
+    String incorrectJsonBody = "{ \"id\": 1, \"title\": \"Reliability of late night deployments\" }";
+    String emptyFieldJsonBody = "{ \"id\": 1, \"author\": \"\", \"title\": \"Reliability of late night deployments\" }";
 
     /*
      1. Verify that the API starts with an empty store.
@@ -26,15 +27,15 @@ public class StoreTest extends StoreModel {
      */
     @Test
     public void bookStoreTest() {
-        Response response = RestAssured
+
+        List<BookModel> bookModel = RestAssured
                 .given()
                 .contentType(ContentType.JSON)
                 .get("/books")
                 .then()
                 .extract()
-                .response();
-        assertEquals(response.statusCode(),200);
-        //Assert.assertNotNull(response.getBody().jsonPath().getList("id").get(0));
+                .body().jsonPath().getList("",BookModel.class);
+        System.out.println(bookModel.get(0));
     }
 
     /*
@@ -46,7 +47,7 @@ public class StoreTest extends StoreModel {
         Response response = given()
                 .contentType(ContentType.JSON)
                 .body(incorrectJsonBody)
-                .put("/books/1")
+                .put("/books/3")
                 .then()
                 .extract()
                 .response();
@@ -62,7 +63,7 @@ public class StoreTest extends StoreModel {
         Response response = given()
                 .contentType(ContentType.JSON)
                 .body(emptyFieldJsonBody)
-                .put("/books/1")
+                .put("/books/3")
                 .then()
                 .extract()
                 .response();
@@ -80,7 +81,7 @@ public class StoreTest extends StoreModel {
                 .body(jsonBody)
                 .put("/books/1")
                 .then()
-                .statusCode(400)
+                .statusCode(404)
                 .extract()
                 .response();
     }
@@ -92,15 +93,14 @@ public class StoreTest extends StoreModel {
      */
     @Test
     public void createNewBookTest() {
-        Response response = given()
+        BookModel bookModel = given()
                 .contentType(ContentType.JSON)
                 .get("books/1")
                 .then()
-                .extract()
-                .response();
-        Assert.assertEquals(1, response.getBody().jsonPath().getInt("id"));
-        Assert.assertEquals("John Smith", response.getBody().jsonPath().getString("author"));
-        Assert.assertEquals("SRE 101", response.getBody().jsonPath().getString("title"));
+                .extract().body().jsonPath().getObject("", BookModel.class);
+        Assert.assertEquals(1, bookModel.getId());
+        Assert.assertEquals("John Smith", bookModel.getAuthor());
+        Assert.assertEquals("SRE 101", bookModel.getTitle());
     }
 
     /*
@@ -110,14 +110,13 @@ public class StoreTest extends StoreModel {
      */
     @Test
     public void duplicateBookTest() {
-        Response response = given()
+        BookModel bookModel = given()
                 .contentType(ContentType.JSON)
                 .body(jsonBody)
                 .put("books/1")
                 .then()
-                .statusCode(200)
-                .extract()
-                .response();
-        Assert.assertEquals("Field 'author' cannot be empty", response.getBody().jsonPath().getString("error"));
+                .extract().body().jsonPath().getObject("", BookModel.class);
+                //.response();
+        Assert.assertEquals("Field 'author' cannot be empty", bookModel.getAuthor()); //response.getBody().jsonPath().getString("error"));
     }
 }
